@@ -17,6 +17,7 @@ import os
 import pickle
 import subprocess
 import tempfile
+from shlex import quote
 
 import numpy as np
 
@@ -192,7 +193,9 @@ if stable_num > 1:
 
             file_content = subprocess.check_output(["cat", test_path]).decode()
 
-            assert os.system(cmd) == 0, f"{cmd} failed: \n\n{file_content}"
+            assert (
+                os.system(f"bash -c {quote(cmd)}") == 0
+            ), f"{cmd} failed: \n\n{file_content}"
             with open(output_pickle_path, "rb") as f:
                 outputs = pickle.load(f)
             ret.append(
