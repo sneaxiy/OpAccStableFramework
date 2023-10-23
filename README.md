@@ -5,5 +5,5 @@
 Set the `TORCH_VENV` path inside `run_test.sh`. Then run:
 
 ```Shell
-bash run_test.sh tests/softmax_test.sh
+bash run_test.sh tests/softmax_test.py
 ```
