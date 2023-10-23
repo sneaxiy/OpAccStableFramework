@@ -1,0 +1,7 @@
+__pycache__
+tests/__pycache__
+*.whl
+*.st
+venv
+*_venv
+the_path_you_should_set
