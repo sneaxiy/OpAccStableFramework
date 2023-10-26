@@ -15,7 +15,6 @@
 
 from op_acc_stable_run import check_tensor_diff, op_acc_stable_run
 
-
 class GeluTest:
     def set_configs_0(self, paddle):
         self.shape = [1, 12288]
