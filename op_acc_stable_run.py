@@ -168,6 +168,7 @@ for i in range(stable_num):
     else:
         with {framework}.no_grad():
             check_aadiff(prev_ret, outputs)
+    print(i)
 
 if stable_num > 1:
     print(f'AAdiff check passed after {stable_num} runs')
