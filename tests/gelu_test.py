@@ -15,16 +15,34 @@
 
 from op_acc_stable_run import check_tensor_diff, op_acc_stable_run
 
-class GeluTest:
-    def set_configs_0(self, paddle):
+class GeluTest_0:
+    def set_configs(self, paddle):
         self.shape = [1, 12288]
         self.dtype = "float32"
         self.inputs = {
             "x": paddle.randn(self.shape, dtype=self.dtype),
             "y_grad": paddle.randn(self.shape, dtype=self.dtype),
         }
-    
-    def set_configs_1(self, paddle):
+
+    def run_paddle(self, paddle):
+        x = self.inputs["x"]
+        y = paddle.nn.functional.gelu(x)
+        y.backward(self.inputs["y_grad"])
+        return y, x.grad
+
+    def run_torch(self, torch):
+        x = self.inputs["x"]
+        y = torch.nn.functional.gelu(x)
+        y.backward(self.inputs["y_grad"])
+        return y, x.grad
+
+    def check_diff(self, paddle, pd_ret, th_ret):
+        assert len(pd_ret) == len(th_ret)
+        for pd, th in zip(pd_ret, th_ret):
+            check_tensor_diff(pd, th, atol=1e-6, rtol=1e-6)
+
+class GeluTest_1:
+    def set_configs(self, paddle):
         self.shape = [1,  4096, 24576]
         self.dtype = "float32"
         self.inputs = {
@@ -51,4 +69,5 @@ class GeluTest:
 
 
 if __name__ == "__main__":
-    op_acc_stable_run(GeluTest)
+    op_acc_stable_run(GeluTest_0)
+    op_acc_stable_run(GeluTest_1)
