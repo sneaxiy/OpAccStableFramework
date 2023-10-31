@@ -17,6 +17,7 @@ import os
 import pickle
 import subprocess
 import tempfile
+from shlex import quote
 
 import numpy as np
 
@@ -111,35 +112,32 @@ def op_acc_stable_run(test_obj, stable_num=100):
         test_obj = test_obj()
 
     import paddle
-    for i in range(2):
-        if i == 0:
-            test_obj.set_configs_0(paddle)
-        else:
-            test_obj.set_configs_1(paddle)
 
-        src_path = os.path.abspath(inspect.getsourcefile(type(test_obj)))
+    test_obj.set_configs(paddle)
 
-        old_inputs = test_obj.inputs
-        test_obj.inputs = convert_framework(old_inputs)
+    src_path = os.path.abspath(inspect.getsourcefile(type(test_obj)))
 
-        envs = {
-            "paddle": "",
-            "torch": os.getenv("TORCH_VENV"),
-        }
+    old_inputs = test_obj.inputs
+    test_obj.inputs = convert_framework(old_inputs)
 
-        ret = []
-        with tempfile.TemporaryDirectory(dir="/home") as path:
-            input_pickle_path = os.path.join(path, "inputs.bin")
-            with open(input_pickle_path, "wb") as f:
-                pickle.dump(test_obj, f)
+    envs = {
+        "paddle": "",
+        "torch": os.getenv("TORCH_VENV"),
+    }
 
-            for framework, script in zip(
-                ["paddle", "torch"], ["paddle_test.py", "torch_test.py"]
-            ):
-                test_path = os.path.join(path, script)
-                output_pickle_path = os.path.join(path, f"{framework}_output.bin")
-                with open(test_path, "w") as f:
-                    f.write(
+    ret = []
+    with tempfile.TemporaryDirectory(dir="/home") as path:
+        input_pickle_path = os.path.join(path, "inputs.bin")
+        with open(input_pickle_path, "wb") as f:
+            pickle.dump(test_obj, f)
+
+        for framework, script in zip(
+            ["paddle", "torch"], ["paddle_test.py", "torch_test.py"]
+        ):
+            test_path = os.path.join(path, script)
+            output_pickle_path = os.path.join(path, f"{framework}_output.bin")
+            with open(test_path, "w") as f:
+                f.write(
                     f"""import {framework}
 import pickle
 from {os.path.basename(src_path).split('.')[0]} import *
@@ -167,51 +165,53 @@ for i in range(stable_num):
     else:
         with {framework}.no_grad():
             check_aadiff(prev_ret, outputs)
+    print(i)
 
 if stable_num > 1:
     print(f'AAdiff check passed after {stable_num} runs')
 """
                 )
 
-                import_paths = [src_path, "."]
-                python_paths = []
-                for p in import_paths:
-                    p = os.path.abspath(p)
-                    if os.path.isfile(p):
-                        p = os.path.dirname(p)
-                    python_paths.append(p)
+            import_paths = [src_path, "."]
+            python_paths = []
+            for p in import_paths:
+                p = os.path.abspath(p)
+                if os.path.isfile(p):
+                    p = os.path.dirname(p)
+                python_paths.append(p)
 
-                venv = envs.get(framework)
-                if venv:
-                    cmd = f'source "{envs.get(framework)}/bin/activate" && '
-                else:
-                    cmd = ""
+            venv = envs.get(framework)
+            if venv:
+                cmd = f'source "{envs.get(framework)}/bin/activate" && '
+            else:
+                cmd = ""
 
-                cmd = (
-                    cmd
-                    + f'export PYTHONPATH=$PYTHONPATH:{":".join(python_paths)}'
-                    + f' && python "{test_path}"'
+            cmd = (
+                cmd
+                + f'export PYTHONPATH=$PYTHONPATH:{":".join(python_paths)}'
+                + f' && python "{test_path}"'
+            )
+
+            file_content = subprocess.check_output(["cat", test_path]).decode()
+
+            assert (
+                os.system(f"bash -c {quote(cmd)}") == 0
+            ), f"{cmd} failed: \n\n{file_content}"
+            with open(output_pickle_path, "rb") as f:
+                outputs = pickle.load(f)
+            ret.append(
+                convert_framework(
+                    outputs, tensor_to_numpy=False, dst_framework="paddle"
                 )
+            )
 
-                file_content = subprocess.check_output(["cat", test_path]).decode()
+    test_obj.inputs = old_inputs
 
-                from shlex import quote
-                assert os.system(f'bash -c {quote(cmd)}') == 0, f"{cmd} failed: \n\n{file_content}"
-                with open(output_pickle_path, "rb") as f:
-                    outputs = pickle.load(f)
-                ret.append(
-                    convert_framework(
-                        outputs, tensor_to_numpy=False, dst_framework="paddle"
-                    )
-                )
+    import paddle
 
-        test_obj.inputs = old_inputs
-
-        import paddle
-
-        with paddle.no_grad():
-            test_obj.check_diff(paddle, ret[0], ret[1])
-        print("Case ",i," Accuracy check passed")
+    with paddle.no_grad():
+        test_obj.check_diff(paddle, ret[0], ret[1])
+    print("Accuracy check passed")
 
 
 def check_tensor_diff(x, y, *, atol, rtol, err_msg=""):
