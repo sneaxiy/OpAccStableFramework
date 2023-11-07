@@ -15,10 +15,12 @@
 
 from op_acc_stable_run import check_tensor_diff, op_acc_stable_run
 
-class GeluTest_0:
-    def set_configs(self, paddle):
+class GeluTestCase1_FP32:
+    def init_params(self, paddle):
         self.shape = [1, 12288]
         self.dtype = "float32"
+    
+    def set_configs(self, paddle):
         self.inputs = {
             "x": paddle.randn(self.shape, dtype=self.dtype),
             "y_grad": paddle.randn(self.shape, dtype=self.dtype),
@@ -41,33 +43,24 @@ class GeluTest_0:
         for pd, th in zip(pd_ret, th_ret):
             check_tensor_diff(pd, th, atol=1e-6, rtol=1e-6)
 
-class GeluTest_1:
-    def set_configs(self, paddle):
+class GeluTestCase1_FP64(GeluTestCase1_FP32):
+    def init_params(self, paddle):
+        self.shape = [1, 12288]
+        self.dtype = "float64"
+
+class GeluTestCase2_FP32(GeluTestCase1_FP32):
+    def init_params(self, paddle):
         self.shape = [1,  4096, 24576]
         self.dtype = "float32"
-        self.inputs = {
-            "x": paddle.randn(self.shape, dtype=self.dtype),
-            "y_grad": paddle.randn(self.shape, dtype=self.dtype),
-        }
 
-    def run_paddle(self, paddle):
-        x = self.inputs["x"]
-        y = paddle.nn.functional.gelu(x)
-        y.backward(self.inputs["y_grad"])
-        return y, x.grad
-
-    def run_torch(self, torch):
-        x = self.inputs["x"]
-        y = torch.nn.functional.gelu(x)
-        y.backward(self.inputs["y_grad"])
-        return y, x.grad
-
-    def check_diff(self, paddle, pd_ret, th_ret):
-        assert len(pd_ret) == len(th_ret)
-        for pd, th in zip(pd_ret, th_ret):
-            check_tensor_diff(pd, th, atol=1e-6, rtol=1e-6)
-
+class GeluTestCase2_FP64(GeluTestCase1_FP32):
+    def init_params(self, paddle):
+        self.shape = [1,  4096, 24576]
+        self.dtype = "float64"        
+            
 
 if __name__ == "__main__":
-    op_acc_stable_run(GeluTest_0)
-    op_acc_stable_run(GeluTest_1)
+    op_acc_stable_run(GeluTestCase1_FP32)
+    op_acc_stable_run(GeluTestCase1_FP64)
+    op_acc_stable_run(GeluTestCase2_FP32)
+    op_acc_stable_run(GeluTestCase2_FP64)
