@@ -23,8 +23,8 @@ class GeluTestCase1_FP32:
     
     def set_configs(self, paddle):
         self.inputs = {
-            "x": paddle.to_tensor(np.random.random(size=[1, 12288]).astype("float32")-0.5),
-            "y_grad": paddle.to_tensor(np.random.random(size=[1, 12288]).astype("float32")-0.5),
+            "x": paddle.to_tensor(np.random.random(size=self.shape).astype(self.dtype)-0.5),
+            "y_grad": paddle.to_tensor(np.random.random(size=self.shape).astype(self.dtype)-0.5),
         }
 
     def run_paddle(self, paddle):
