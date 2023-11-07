@@ -13,6 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+<<<<<<< HEAD
+=======
+import numpy as np
+import paddle
+>>>>>>> gelu
 from op_acc_stable_run import check_tensor_diff, op_acc_stable_run
 
 class GeluTest:
@@ -22,8 +27,8 @@ class GeluTest:
 
     def set_configs(self, paddle):
         self.inputs = {
-            "x": paddle.randn(self.shape, dtype=self.dtype),
-            "y_grad": paddle.randn(self.shape, dtype=self.dtype),
+            "x": paddle.to_tensor(np.random.random(size=[1, 12288]).astype("float32")-0.5),
+            "y_grad": paddle.to_tensor(np.random.random(size=[1, 12288]).astype("float32")-0.5),
         }
 
     def run_paddle(self, paddle):
@@ -43,6 +48,7 @@ class GeluTest:
         for pd, th in zip(pd_ret, th_ret):
             check_tensor_diff(pd, th, atol=1e-6, rtol=1e-6)
 
+<<<<<<< HEAD
 if __name__ == "__main__":
     op_acc_stable_run(GeluTest(shape=[1, 12288], dtype="float32"))
     op_acc_stable_run(GeluTest(shape=[1, 12288], dtype="float16"))
@@ -50,3 +56,37 @@ if __name__ == "__main__":
     op_acc_stable_run(GeluTest(shape=[1, 4096, 24576], dtype="float32"))
     op_acc_stable_run(GeluTest(shape=[1, 4096, 24576], dtype="float16"))
     op_acc_stable_run(GeluTest(shape=[1, 4096, 24576], dtype="bfloat16"))
+=======
+class GeluTestCase1_BFP16(GeluTestCase1_FP32):
+    def init_params(self, paddle):
+        self.shape = [1, 12288]
+        self.dtype = "bfloat16"
+
+class GeluTestCase1_FP16(GeluTestCase1_FP32):
+    def init_params(self, paddle):
+        self.shape = [1, 12288]
+        self.dtype = "float16"
+
+class GeluTestCase2_FP32(GeluTestCase1_FP32):
+    def init_params(self, paddle):
+        self.shape = [1,  4096, 24576]
+        self.dtype = "float32"
+
+class GeluTestCase2_BFP16(GeluTestCase1_FP32):
+    def init_params(self, paddle):
+        self.shape = [1,  4096, 24576]
+        self.dtype = "bfloat16"        
+            
+class GeluTestCase2_FP16(GeluTestCase1_FP32):
+    def init_params(self, paddle):
+        self.shape = [1,  4096, 24576]
+        self.dtype = "float16"    
+
+if __name__ == "__main__":
+    op_acc_stable_run(GeluTestCase1_FP32)
+    op_acc_stable_run(GeluTestCase1_BFP16)
+    op_acc_stable_run(GeluTestCase1_FP16)
+    op_acc_stable_run(GeluTestCase2_FP32)
+    op_acc_stable_run(GeluTestCase2_BFP16)
+    op_acc_stable_run(GeluTestCase2_FP16)
+>>>>>>> gelu
