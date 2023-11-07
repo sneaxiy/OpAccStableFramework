@@ -17,6 +17,7 @@ import os
 import pickle
 import subprocess
 import tempfile
+from shlex import quote
 
 import numpy as np
 
@@ -91,7 +92,7 @@ def check_tensor_aadiff(x, y):
 
     assert x.dtype == y.dtype
     assert x.shape == y.shape
-    if x.dtype == paddle.bfloat16:
+    if x.dtype in [paddle.bool, paddle.bfloat16]:
         x = x.astype(paddle.float32)
         y = y.astype(paddle.float32)
     assert paddle.max(paddle.abs(x - y)).numpy()[0] == 0, "aadiff check failed"
@@ -125,7 +126,7 @@ def op_acc_stable_run(test_obj, stable_num=100):
     }
 
     ret = []
-    with tempfile.TemporaryDirectory(dir="/dev/shm") as path:
+    with tempfile.TemporaryDirectory(dir="/home") as path:
         input_pickle_path = os.path.join(path, "inputs.bin")
         with open(input_pickle_path, "wb") as f:
             pickle.dump(test_obj, f)
@@ -164,6 +165,7 @@ for i in range(stable_num):
     else:
         with {framework}.no_grad():
             check_aadiff(prev_ret, outputs)
+    print(i)
 
 if stable_num > 1:
     print(f'AAdiff check passed after {stable_num} runs')
@@ -192,7 +194,9 @@ if stable_num > 1:
 
             file_content = subprocess.check_output(["cat", test_path]).decode()
 
-            assert os.system(cmd) == 0, f"{cmd} failed: \n\n{file_content}"
+            assert (
+                os.system(f"bash -c {quote(cmd)}") == 0
+            ), f"{cmd} failed: \n\n{file_content}"
             with open(output_pickle_path, "rb") as f:
                 outputs = pickle.load(f)
             ret.append(
