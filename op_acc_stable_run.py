@@ -92,10 +92,10 @@ def check_tensor_aadiff(x, y):
 
     assert x.dtype == y.dtype
     assert x.shape == y.shape
-    if x.dtype == paddle.bfloat16:
+    if x.dtype in [paddle.bool, paddle.bfloat16]:
         x = x.astype(paddle.float32)
         y = y.astype(paddle.float32)
-    assert paddle.max(paddle.abs(x - y)).numpy()[0] == 0, "aadiff check failed"
+    assert paddle.max(paddle.abs(x - y)).numpy() == 0, "aadiff check failed"
 
 
 def check_aadiff(x, y):
@@ -126,10 +126,7 @@ def op_acc_stable_run(test_obj, stable_num=100):
     }
 
     ret = []
-    tmp_cache_path = getattr(test_obj, "tmp_cache_path", None)
-    if not tmp_cache_path:
-        tmp_cache_path = os.getenv("TMP_CACHE_PATH", "/dev/shm")
-    with tempfile.TemporaryDirectory(dir=tmp_cache_path) as path:
+    with tempfile.TemporaryDirectory(dir="/dev/shm") as path:
         input_pickle_path = os.path.join(path, "inputs.bin")
         with open(input_pickle_path, "wb") as f:
             pickle.dump(test_obj, f)
@@ -168,6 +165,7 @@ for i in range(stable_num):
     else:
         with {framework}.no_grad():
             check_aadiff(prev_ret, outputs)
+    print(i)
 
 if stable_num > 1:
     print(f'AAdiff check passed after {stable_num} runs')
