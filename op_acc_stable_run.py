@@ -95,7 +95,7 @@ def check_tensor_aadiff(x, y):
     if x.dtype in [paddle.bool, paddle.bfloat16]:
         x = x.astype(paddle.float32)
         y = y.astype(paddle.float32)
-    assert paddle.max(paddle.abs(x - y)).numpy()[0] == 0, "aadiff check failed"
+    assert paddle.max(paddle.abs(x - y)).numpy() == 0, "aadiff check failed"
 
 
 def check_aadiff(x, y):
@@ -113,7 +113,6 @@ def op_acc_stable_run(test_obj, stable_num=100):
 
     import paddle
 
-    test_obj.init_params(paddle)
     test_obj.set_configs(paddle)
 
     src_path = os.path.abspath(inspect.getsourcefile(type(test_obj)))
