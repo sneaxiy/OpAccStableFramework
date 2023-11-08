@@ -126,7 +126,10 @@ def op_acc_stable_run(test_obj, stable_num=100):
     }
 
     ret = []
-    with tempfile.TemporaryDirectory(dir="/dev/shm") as path:
+    tmp_cache_path = getattr(test_obj, "tmp_cache_path", None)
+    if not tmp_cache_path:
+        tmp_cache_path = os.getenv("TMP_CACHE_PATH", "/dev/shm")
+    with tempfile.TemporaryDirectory(dir=tmp_cache_path) as path:
         input_pickle_path = os.path.join(path, "inputs.bin")
         with open(input_pickle_path, "wb") as f:
             pickle.dump(test_obj, f)
