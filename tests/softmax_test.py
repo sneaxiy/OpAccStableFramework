@@ -17,9 +17,11 @@ from op_acc_stable_run import check_tensor_diff, op_acc_stable_run
 
 
 class SoftmaxTest:
-    def set_configs(self, paddle):
+    def init_params(self, paddle):
         self.shape = [4096, 128]
         self.dtype = "float32"
+
+    def set_configs(self, paddle):
         self.axis = -1
         self.inputs = {
             "x": paddle.randn(self.shape, dtype=self.dtype),
