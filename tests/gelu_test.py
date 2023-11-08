@@ -22,8 +22,8 @@ class GeluTest:
 
     def set_configs(self, paddle):
         self.inputs = {
-            "x": paddle.to_tensor(np.random.random(size=[1, 12288]).astype("float32")-0.5),
-            "y_grad": paddle.to_tensor(np.random.random(size=[1, 12288]).astype("float32")-0.5),
+            "x": paddle.randn(self.shape, dtype=self.dtype),
+            "y_grad": paddle.randn(self.shape, dtype=self.dtype),
         }
 
     def run_paddle(self, paddle):
