@@ -12,15 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 from op_acc_stable_run import check_tensor_diff, op_acc_stable_run
 
+class GeluTest:
+    def __init__(self, shape, dtype):
+        self.shape = shape
+        self.dtype = dtype
 
-class SoftmaxTest:
     def set_configs(self, paddle):
-        self.shape = [4096, 128]
-        self.dtype = "float32"
-        self.axis = -1
+        self.tmp_cache_path = "."
         self.inputs = {
             "x": paddle.randn(self.shape, dtype=self.dtype),
             "y_grad": paddle.randn(self.shape, dtype=self.dtype),
@@ -28,13 +28,13 @@ class SoftmaxTest:
 
     def run_paddle(self, paddle):
         x = self.inputs["x"]
-        y = paddle.nn.functional.softmax(x, axis=self.axis)
+        y = paddle.nn.functional.gelu(x)
         y.backward(self.inputs["y_grad"])
         return y, x.grad
 
     def run_torch(self, torch):
         x = self.inputs["x"]
-        y = torch.nn.functional.softmax(x, dim=self.axis)
+        y = torch.nn.functional.gelu(x)
         y.backward(self.inputs["y_grad"])
         return y, x.grad
 
@@ -43,6 +43,10 @@ class SoftmaxTest:
         for pd, th in zip(pd_ret, th_ret):
             check_tensor_diff(pd, th, atol=1e-6, rtol=1e-6)
 
-
 if __name__ == "__main__":
-    op_acc_stable_run(SoftmaxTest)
+    op_acc_stable_run(GeluTest(shape=[1, 12288], dtype="float32"))
+    op_acc_stable_run(GeluTest(shape=[1, 12288], dtype="float16"))
+    op_acc_stable_run(GeluTest(shape=[1, 12288], dtype="bfloat16"))
+    op_acc_stable_run(GeluTest(shape=[1, 4096, 24576], dtype="float32"))
+    op_acc_stable_run(GeluTest(shape=[1, 4096, 24576], dtype="float16"))
+    op_acc_stable_run(GeluTest(shape=[1, 4096, 24576], dtype="bfloat16"))

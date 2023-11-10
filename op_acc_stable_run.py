@@ -92,10 +92,10 @@ def check_tensor_aadiff(x, y):
 
     assert x.dtype == y.dtype
     assert x.shape == y.shape
-    if x.dtype == paddle.bfloat16:
+    if x.dtype in [paddle.bool, paddle.bfloat16]:
         x = x.astype(paddle.float32)
         y = y.astype(paddle.float32)
-    assert paddle.max(paddle.abs(x - y)).numpy()[0] == 0, "aadiff check failed"
+    assert paddle.max(paddle.abs(x - y)).numpy() == 0, "aadiff check failed"
 
 
 def check_aadiff(x, y):
