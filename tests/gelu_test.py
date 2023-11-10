@@ -20,7 +20,7 @@ class GeluTest:
         self.dtype = dtype
 
     def set_configs(self, paddle):
-        self.tmp_cache_path = "/home"
+        self.tmp_cache_path = "."
         self.inputs = {
             "x": paddle.randn(self.shape, dtype=self.dtype),
             "y_grad": paddle.randn(self.shape, dtype=self.dtype),
