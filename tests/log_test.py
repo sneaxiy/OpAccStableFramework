@@ -15,30 +15,26 @@
 
 from op_acc_stable_run import check_tensor_diff, op_acc_stable_run
 
-class SoftmaxTest:
-    def __init__(self, shape, axis, dtype):
-        self.shape = shape
-        self.axis = axis
+class LogTest:
+    def __init__(self, x_shape, dtype):
+        self.x_shape = x_shape
         self.dtype = dtype 
 
     def set_configs(self, paddle):
         self.tmp_cache_path = "."
         self.inputs = {
-            "x": paddle.randn(self.shape, dtype=self.dtype),
-            "y_grad": paddle.randn(self.shape, dtype=self.dtype),
+            "x": paddle.randn(self.x_shape, dtype=self.dtype) ,
         }
 
     def run_paddle(self, paddle):
         x = self.inputs["x"]
-        y = paddle.nn.functional.softmax(x, axis=self.axis)
-        y.backward(self.inputs["y_grad"])
-        return y, x.grad
+        y = paddle.log(x)
+        return y
 
     def run_torch(self, torch):
         x = self.inputs["x"]
-        y = torch.nn.functional.softmax(x, dim=self.axis)
-        y.backward(self.inputs["y_grad"])
-        return y, x.grad
+        y = torch.log(x)
+        return y
 
     def check_diff(self, paddle, pd_ret, th_ret):
         assert len(pd_ret) == len(th_ret)
@@ -46,4 +42,5 @@ class SoftmaxTest:
             check_tensor_diff(pd, th, atol=1e-6, rtol=1e-6)
 
 if __name__ == "__main__":
-    op_acc_stable_run(SoftmaxTest(shape = [1, 1024, 254208],  axis=-1, dtype ='float32'))
+    op_acc_stable_run(LogTest(x_shape = [1, 1024, 254208], dtype ='float32'))
+    op_acc_stable_run(LogTest(x_shape = [1, 1024, 1], dtype ='float32'))
