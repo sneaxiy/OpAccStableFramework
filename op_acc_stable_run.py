@@ -1,4 +1,3 @@
-
 # Copyright (c) 2023 PaddlePaddle Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -96,7 +95,7 @@ def check_tensor_aadiff(x, y):
     if x.dtype == paddle.bfloat16:
         x = x.astype(paddle.float32)
         y = y.astype(paddle.float32)
-    assert paddle.max(paddle.abs(x - y)).numpy() == 0, "aadiff check failed"
+    assert paddle.max(paddle.abs(x - y)).numpy()[0] == 0, "aadiff check failed"
 
 
 def check_aadiff(x, y):
