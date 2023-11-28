@@ -12,37 +12,48 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
+import numpy as np
 from op_acc_stable_run import check_tensor_diff, op_acc_stable_run
 
+class Zero_like_Test:
+    def __init__(self, x_shape, dtype):
+        self.x_shape = x_shape
+        self.dtype = dtype 
 
-class SoftmaxTest:
     def set_configs(self, paddle):
-        self.shape = [4096, 128]
-        self.dtype = "float32"
-        self.axis = -1
+        self.tmp_cache_path = "."
         self.inputs = {
-            "x": paddle.randn(self.shape, dtype=self.dtype),
-            "y_grad": paddle.randn(self.shape, dtype=self.dtype),
+            "x": paddle.to_tensor(np.random.random(size=self.x_shape).astype(self.dtype) - 0.5) ,
         }
 
     def run_paddle(self, paddle):
         x = self.inputs["x"]
-        y = paddle.nn.functional.softmax(x, axis=self.axis)
-        y.backward(self.inputs["y_grad"])
-        return y, x.grad
+        y = paddle.zeros_like(x, dtype=self.dtype)
+        return y
 
     def run_torch(self, torch):
+        def convert_dtype(dtype):
+            ret = None
+            if dtype == "float32":
+                ret = torch.float32
+            elif dtype == "float16":
+                ret = torch.float16
+            elif dtype == "bfloat16":
+                ret = torch.bfloat16
+            elif dtype == "int64":
+                ret = torch.int64
+            elif dtype == "uint16":
+                ret = torch.bfloat16
+            return ret
         x = self.inputs["x"]
-        y = torch.nn.functional.softmax(x, dim=self.axis)
-        y.backward(self.inputs["y_grad"])
-        return y, x.grad
+        type = convert_dtype(self.dtype)
+        y = torch.zeros_like(x, dtype=type)
+        return y
 
     def check_diff(self, paddle, pd_ret, th_ret):
         assert len(pd_ret) == len(th_ret)
         for pd, th in zip(pd_ret, th_ret):
             check_tensor_diff(pd, th, atol=1e-6, rtol=1e-6)
 
-
 if __name__ == "__main__":
-    op_acc_stable_run(SoftmaxTest)
+    op_acc_stable_run(Zero_like_Test(x_shape = [1, 8192], dtype ='int64'))
