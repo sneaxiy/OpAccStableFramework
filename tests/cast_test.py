@@ -15,30 +15,40 @@
 
 from op_acc_stable_run import check_tensor_diff, op_acc_stable_run
 
-class SoftmaxTest:
-    def __init__(self, shape, axis, dtype):
-        self.shape = shape
-        self.axis = axis
+class CastTest:
+    def __init__(self, x_shape, dtype):
+        self.x_shape = x_shape
         self.dtype = dtype 
 
     def set_configs(self, paddle):
         self.tmp_cache_path = "."
         self.inputs = {
-            "x": paddle.randn(self.shape, dtype=self.dtype),
-            "y_grad": paddle.randn(self.shape, dtype=self.dtype),
+            "x": paddle.randn(self.x_shape) ,
         }
 
     def run_paddle(self, paddle):
         x = self.inputs["x"]
-        y = paddle.nn.functional.softmax(x, axis=self.axis)
-        y.backward(self.inputs["y_grad"])
-        return y, x.grad
+        y = paddle.cast(x, self.dtype)
+        return y
 
     def run_torch(self, torch):
+        def convert_dtype(dtype):
+            ret = None
+            if dtype == "float32":
+                ret = torch.float32
+            elif dtype == "float16":
+                ret = torch.float16
+            elif dtype == "bfloat16":
+                ret = torch.bfloat16
+            elif dtype == "int64":
+                ret = torch.int64
+            elif dtype == "uint16":
+                ret = torch.bfloat16
+            return ret
         x = self.inputs["x"]
-        y = torch.nn.functional.softmax(x, dim=self.axis)
-        y.backward(self.inputs["y_grad"])
-        return y, x.grad
+        type = convert_dtype(self.dtype)
+        y = x.to(type) 
+        return y
 
     def check_diff(self, paddle, pd_ret, th_ret):
         assert len(pd_ret) == len(th_ret)
@@ -46,4 +56,4 @@ class SoftmaxTest:
             check_tensor_diff(pd, th, atol=1e-6, rtol=1e-6)
 
 if __name__ == "__main__":
-    op_acc_stable_run(SoftmaxTest(shape = [1, 1024, 254208],  axis=-1, dtype ='float32'))
+    op_acc_stable_run(CastTest(x_shape = [1, 1024, 254208], dtype ='float32'))
