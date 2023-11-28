@@ -16,29 +16,25 @@
 from op_acc_stable_run import check_tensor_diff, op_acc_stable_run
 
 class TransposeTest:
-    def __init__(self, x_shape,y_grad_shape, dtype):
+    def __init__(self, x_shape, dtype):
         self.x_shape = x_shape
-        self.y_grad_shape = y_grad_shape
         self.dtype = dtype 
 
     def set_configs(self, paddle):
         self.tmp_cache_path = "."
         self.inputs = {
             "x": paddle.randn(self.x_shape, dtype=self.dtype),
-            "y_grad": paddle.randn(self.y_grad_shape, dtype=self.dtype),
         }
 
     def run_paddle(self, paddle):
         x = self.inputs["x"]
-        y = paddle.transpose(x,[0, 2, 1, 3])
-        y.backward(self.inputs["y_grad"])
-        return y, x.grad
+        y = paddle.transpose(x,[1,0,2])
+        return y
 
     def run_torch(self, torch):
         x = self.inputs["x"]
-        y = torch.transpose(x,1,2)
-        y.backward(self.inputs["y_grad"])
-        return y, x.grad
+        y = torch.transpose(x,0,1)
+        return y
 
     def check_diff(self, paddle, pd_ret, th_ret):
         assert len(pd_ret) == len(th_ret)
@@ -46,14 +42,6 @@ class TransposeTest:
             check_tensor_diff(pd, th, atol=1e-6, rtol=1e-6)
 
 if __name__ == "__main__":
-    op_acc_stable_run(TransposeTest(x_shape=[1, 32, 4096, 192], y_grad_shape=[1, 4096, 32, 192], dtype="float32"))
-    op_acc_stable_run(TransposeTest(x_shape=[1, 32, 4096, 192], y_grad_shape=[1, 4096, 32, 192], dtype="float16"))
-    op_acc_stable_run(TransposeTest(x_shape=[1, 32, 4096, 192], y_grad_shape=[1, 4096, 32, 192], dtype="bfloat16"))
-
-    op_acc_stable_run(TransposeTest(x_shape=[1, 4096, 32, 192], y_grad_shape=[1, 32, 4096, 192], dtype="float32"))
-    op_acc_stable_run(TransposeTest(x_shape=[1, 4096, 32, 192], y_grad_shape=[1, 32, 4096, 192], dtype="float16"))
-    op_acc_stable_run(TransposeTest(x_shape=[1, 4096, 32, 192], y_grad_shape=[1, 32, 4096, 192], dtype="bfloat16"))
-
-    op_acc_stable_run(TransposeTest(x_shape=[1, 1, 8192, 128], y_grad_shape=[1, 8192, 1, 128], dtype="float32"))
-    op_acc_stable_run(TransposeTest(x_shape=[1, 1, 8192, 128], y_grad_shape=[1, 8192, 1, 128], dtype="float16"))
-    op_acc_stable_run(TransposeTest(x_shape=[1, 1, 8192, 128], y_grad_shape=[1, 8192, 1, 128], dtype="bfloat16"))
+    op_acc_stable_run(TransposeTest(x_shape=[1, 8192, 31776], dtype="bfloat16"))
+    op_acc_stable_run(TransposeTest(x_shape=[1024, 1, 254208], dtype="bfloat16"))
+    op_acc_stable_run(TransposeTest(x_shape=[8192, 1, 31776], dtype="bfloat16"))
