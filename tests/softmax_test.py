@@ -15,14 +15,12 @@
 
 from op_acc_stable_run import check_tensor_diff, op_acc_stable_run
 
-class SoftmaxTest:
-    def __init__(self, shape, axis, dtype):
-        self.shape = shape
-        self.axis = axis
-        self.dtype = dtype 
 
+class SoftmaxTest:
     def set_configs(self, paddle):
-        self.tmp_cache_path = "."
+        self.shape = [4096, 128]
+        self.dtype = "float32"
+        self.axis = -1
         self.inputs = {
             "x": paddle.randn(self.shape, dtype=self.dtype),
             "y_grad": paddle.randn(self.shape, dtype=self.dtype),
@@ -45,5 +43,6 @@ class SoftmaxTest:
         for pd, th in zip(pd_ret, th_ret):
             check_tensor_diff(pd, th, atol=1e-6, rtol=1e-6)
 
+
 if __name__ == "__main__":
-    op_acc_stable_run(SoftmaxTest(shape = [1, 1024, 254208],  axis=-1, dtype ='float32'))
+    op_acc_stable_run(SoftmaxTest)
