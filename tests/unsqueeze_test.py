@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
+import numpy as np
 from op_acc_stable_run import check_tensor_diff, op_acc_stable_run
 
 class UnsqueezeTest:
@@ -24,7 +24,7 @@ class UnsqueezeTest:
     def set_configs(self, paddle):
         self.tmp_cache_path = "."
         self.inputs = {
-            "x": paddle.randn(self.x_shape, dtype=self.dtype) ,
+            "x": paddle.to_tensor(np.random.random(size=self.x_shape).astype(self.dtype) - 0.5) ,
         }
 
     def run_paddle(self, paddle):
@@ -43,4 +43,4 @@ class UnsqueezeTest:
             check_tensor_diff(pd, th, atol=1e-6, rtol=1e-6)
 
 if __name__ == "__main__":
-    op_acc_stable_run(UnsqueezeTest(x_shape = [1, 8192], axis = -1, dtype ='float32'))
+    op_acc_stable_run(UnsqueezeTest(x_shape = [1, 8192], axis = -1, dtype ='int64'))
