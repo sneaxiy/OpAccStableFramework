@@ -15,34 +15,37 @@
 
 from op_acc_stable_run import check_tensor_diff, op_acc_stable_run
 
+class MinimumTest:
+    def __init__(self, x_shape, x_dtype, y_shape, y_dtype):
+        self.x_shape = x_shape
+        self.x_dtype = x_dtype 
+        self.y_shape = y_shape
+        self.y_dtype = y_dtype
 
-class SoftmaxTest:
     def set_configs(self, paddle):
-        self.shape = [4096, 128]
-        self.dtype = "float32"
-        self.axis = -1
+        self.tmp_cache_path = "."
         self.inputs = {
-            "x": paddle.randn(self.shape, dtype=self.dtype),
-            "y_grad": paddle.randn(self.shape, dtype=self.dtype),
+            "x": paddle.randn(self.x_shape, dtype=self.x_dtype) ,
+            "y": paddle.randn(self.y_shape, dtype=self.y_dtype) ,
         }
 
     def run_paddle(self, paddle):
         x = self.inputs["x"]
-        y = paddle.nn.functional.softmax(x, axis=self.axis)
-        y.backward(self.inputs["y_grad"])
-        return y, x.grad
+        y = self.inputs["y"]
+        y = paddle.minimum(x, y)
+        return y
 
     def run_torch(self, torch):
         x = self.inputs["x"]
-        y = torch.nn.functional.softmax(x, dim=self.axis)
-        y.backward(self.inputs["y_grad"])
-        return y, x.grad
+        y = self.inputs["y"]
+        y = torch.minimum(x, y)
+        return y
 
     def check_diff(self, paddle, pd_ret, th_ret):
         assert len(pd_ret) == len(th_ret)
         for pd, th in zip(pd_ret, th_ret):
             check_tensor_diff(pd, th, atol=1e-6, rtol=1e-6)
 
-
 if __name__ == "__main__":
-    op_acc_stable_run(SoftmaxTest)
+    op_acc_stable_run(MinimumTest(x_shape = [1, 8192], x_dtype ='float32', y_shape = [1, 8192], y_dtype='float32'))
+    
