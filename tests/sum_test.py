@@ -15,34 +15,34 @@
 
 from op_acc_stable_run import check_tensor_diff, op_acc_stable_run
 
+class SumTest:
+    def __init__(self, x_shape, dtype, axis, keepdim):
+        self.x_shape = x_shape
+        self.dtype = dtype 
+        self.axis = axis
+        self.keepdim = keepdim
 
-class SoftmaxTest:
+
     def set_configs(self, paddle):
-        self.shape = [4096, 128]
-        self.dtype = "float32"
-        self.axis = -1
+        self.tmp_cache_path = "."
         self.inputs = {
-            "x": paddle.randn(self.shape, dtype=self.dtype),
-            "y_grad": paddle.randn(self.shape, dtype=self.dtype),
+            "x": paddle.randn(self.x_shape, dtype=self.dtype) ,
         }
 
     def run_paddle(self, paddle):
         x = self.inputs["x"]
-        y = paddle.nn.functional.softmax(x, axis=self.axis)
-        y.backward(self.inputs["y_grad"])
-        return y, x.grad
+        y = paddle.sum(x, axis=self.axis, keepdim=self.keepdim)
+        return y
 
     def run_torch(self, torch):
         x = self.inputs["x"]
-        y = torch.nn.functional.softmax(x, dim=self.axis)
-        y.backward(self.inputs["y_grad"])
-        return y, x.grad
+        y = torch.sum(x, dim=self.axis, keepdim=self.keepdim)
+        return y
 
     def check_diff(self, paddle, pd_ret, th_ret):
-        assert len(pd_ret) == len(th_ret)
         for pd, th in zip(pd_ret, th_ret):
             check_tensor_diff(pd, th, atol=1e-6, rtol=1e-6)
 
-
 if __name__ == "__main__":
-    op_acc_stable_run(SoftmaxTest)
+    op_acc_stable_run(SumTest(x_shape = [1, 1024, 254208], dtype ='float32', axis = -1, keepdim = True))
+    op_acc_stable_run(SumTest(x_shape = [1, 1024, 254208], dtype ='float32', axis = -1, keepdim = False))
