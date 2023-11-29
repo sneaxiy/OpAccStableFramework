@@ -39,8 +39,7 @@ class TakealongaxisTest:
     def run_torch(self, torch):
         arr = self.inputs["arr"]
         indices = self.inputs["indices"]
-        indices = indices.numpy().astype(self.indices_dtype)
-        y = np.take_along_axis(arr, indices, self.axis)
+        y = torch.take_along_dim(arr, indices, self.axis)
         return y
 
     def check_diff(self, paddle, pd_ret, th_ret):
