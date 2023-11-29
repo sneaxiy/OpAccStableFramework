@@ -28,12 +28,12 @@ class ClipTest:
 
     def run_paddle(self, paddle):
         x = self.inputs["x"]
-        y = paddle.clip(x, min=-0.1, max=-0.1)
+        y = paddle.clip(x, min=-0.1, max=0.1)
         return y
 
     def run_torch(self, torch):
         x = self.inputs["x"]
-        y = torch.clip(x, min=-0.1, max=-0.1)
+        y = torch.clip(x, min=-0.1, max=0.1)
         return y
 
     def check_diff(self, paddle, pd_ret, th_ret):
